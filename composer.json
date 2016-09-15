@@ -1,0 +1,29 @@
+{
+    "name": "saxulum/saxulum-processes-executor",
+    "description": "Saxulum Processes Executor",
+    "keywords": ["saxulum", "processes-executor", "command", "symfony"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dominik Zogg",
+            "email": "dominik.zogg@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "~7.0",
+        "psr/log": "~1.0",
+        "symfony/process": "~3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5.0",
+        "saxulum/saxulum-message-queue": "~1.0@dev"
+    },
+    "autoload": {
+        "psr-4": { "Saxulum\\ProcessesExecutor\\": "src/" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+}
