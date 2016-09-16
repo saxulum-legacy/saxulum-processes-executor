@@ -22,5 +22,5 @@ for ($i = 0; $i < 100; ++$i) {
 
     echo $message->toJson().PHP_EOL;
 
-    usleep($argv[2] * $i * 20);
+    usleep($argv[2] * $i * 30);
 }
