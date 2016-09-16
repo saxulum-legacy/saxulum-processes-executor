@@ -17,6 +17,16 @@ class SampleMessage implements MessageInterface
     private $message;
 
     /**
+     * @param string $context
+     * @param string $message
+     */
+    public function __construct(string $context, string $message)
+    {
+        $this->context = $context;
+        $this->message = $message;
+    }
+
+    /**
      * @param string $json
      *
      * @return MessageInterface
@@ -37,16 +47,6 @@ class SampleMessage implements MessageInterface
             'context' => $this->context,
             'message' => $this->message,
         ]);
-    }
-
-    /**
-     * @param string $context
-     * @param string $message
-     */
-    public function __construct(string $context, string $message)
-    {
-        $this->context = $context;
-        $this->message = $message;
     }
 
     /**
