@@ -157,7 +157,7 @@ class ProcessesExecutorTest extends TestCase
             function (array $processes) use (&$outputs, &$errorOutputs) {
                 self::assertLessThanOrEqual(8, count($processes));
                 foreach ($processes as $process) {
-                    /** @var Process $process $commandLine */
+                    /** @var Process $process */
                     $commandLine = $process->getCommandLine();
                     if ('' !== $output = $process->getIncrementalOutput()) {
                         if (!isset($outputs[$commandLine])) {

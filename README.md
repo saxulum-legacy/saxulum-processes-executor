@@ -94,7 +94,7 @@ $executor->execute(
     null,
     function (array $processes) use (&$outputs, &$errorOutputs) {
         foreach ($processes as $process) {
-            /** @var Process $process $commandLine */
+            /** @var Process $process */
             $commandLine = $process->getCommandLine();
             if ('' !== $output = $process->getIncrementalOutput()) {
                 if (!isset($outputs[$commandLine])) {
