@@ -93,7 +93,6 @@ $executor->execute(
     $processes,
     null,
     function (array $processes) use (&$outputs, &$errorOutputs) {
-        self::assertLessThanOrEqual(8, count($processes));
         foreach ($processes as $process) {
             /** @var Process $process $commandLine */
             $commandLine = $process->getCommandLine();
