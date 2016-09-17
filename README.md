@@ -19,7 +19,7 @@ Through [Composer](http://getcomposer.org) as [saxulum/saxulum-processes-executo
 
 ## Usage
 
-### Start callback only
+### Simple use without any callbacks
 
 ```{.php}
 <?php
@@ -35,23 +35,41 @@ $processes = [
     new Process('php subprocess5.php'),
 ];
 
-$output = '';
-$errorOutput = '';
+$startedProcesses = [];
+
+$executor = new ProcessesExecutor();
+$executor->execute($processes);
+```
+
+
+### With start callback (get called onces per process)
+
+```{.php}
+<?php
+
+use Symfony\Component\Process\Process;
+use Saxulum\ProcessesExecutor\ProcessesExecutor;
+
+$processes = [
+    new Process('php subprocess1.php'),
+    new Process('php subprocess2.php'),
+    new Process('php subprocess3.php'),
+    new Process('php subprocess4.php'),
+    new Process('php subprocess5.php'),
+];
+
+$startedProcesses = [];
 
 $executor = new ProcessesExecutor();
 $executor->execute(
     $processes,
-    function ($type, $buffer) use (&$output, &$errorOutput) {
-        if (Process::OUT === $type) {
-            $output .= $buffer;
-        } elseif (Process::ERR === $type) {
-            $errorOutput .= $buffer;
-        }
+    function (Process $process) use (&$startedProcesses) {
+        $startedProcesses[] = $process->getCommandLine();
     }
 );
 ```
 
-### Finish callback to get seperated output and error output per process
+### With iteration callback (get called onces per iteration)
 
 ```{.php}
 <?php
@@ -74,6 +92,54 @@ $executor = new ProcessesExecutor();
 $executor->execute(
     $processes,
     null,
+    function (array $processes) use (&$outputs, &$errorOutputs) {
+        self::assertLessThanOrEqual(8, count($processes));
+        foreach ($processes as $process) {
+            /** @var Process $process $commandLine */
+            $commandLine = $process->getCommandLine();
+            if ('' !== $output = $process->getIncrementalOutput()) {
+                if (!isset($outputs[$commandLine])) {
+                    $outputs[$commandLine] = '';
+                }
+
+                $outputs[$commandLine] .= $output;
+            }
+            if ('' !== $errorOutput = $process->getIncrementalErrorOutput()) {
+                if (!isset($outputs[$commandLine])) {
+                    $errorOutputs[$commandLine] = '';
+                }
+
+                $errorOutputs[$commandLine] .= $errorOutput;
+            }
+        }
+    }
+);
+```
+
+### With finish callback (get called onces per process)
+
+```{.php}
+<?php
+
+use Symfony\Component\Process\Process;
+use Saxulum\ProcessesExecutor\ProcessesExecutor;
+
+$processes = [
+    new Process('php subprocess1.php'),
+    new Process('php subprocess2.php'),
+    new Process('php subprocess3.php'),
+    new Process('php subprocess4.php'),
+    new Process('php subprocess5.php'),
+];
+
+$outputs = [];
+$errorOutputs = [];
+
+$executor = new ProcessesExecutor();
+$executor->execute(
+    $processes,
+    null,
+    null,
     function (Process $process) use (&$outputs, &$errorOutputs) {
         $commandLine = $process->getCommandLine();
         if ('' !== $output = $process->getOutput()) {
@@ -81,145 +147,6 @@ $executor->execute(
         }
         if ('' !== $errorOutput = $process->getErrorOutput()) {
             $errorOutputs[$commandLine] = $errorOutput;
-        }
-    }
-);
-```
-
-### Iteration callback to get runtime information with a message queue
-
-#### Sample Message for parent / children communication
-
-```{.php}
-<?php
-
-namespace My\Project;
-
-use Saxulum\MessageQueue\MessageInterface;
-
-class SampleMessage implements MessageInterface
-{
-    /**
-     * @var string
-     */
-    private $context;
-
-    /**
-     * @var string
-     */
-    private $message;
-
-    /**
-     * @param string $context
-     * @param string $message
-     */
-    public function __construct(string $context, string $message)
-    {
-        $this->context = $context;
-        $this->message = $message;
-    }
-
-    /**
-     * @param string $json
-     *
-     * @return MessageInterface
-     */
-    public static function fromJson(string $json): MessageInterface
-    {
-        $rawMessage = json_decode($json);
-
-        return new self($rawMessage->context, $rawMessage->message);
-    }
-
-    /**
-     * @return string
-     */
-    public function toJson(): string
-    {
-        return json_encode([
-            'context' => $this->context,
-            'message' => $this->message,
-        ]);
-    }
-
-    /**
-     * @return string
-     */
-    public function getContext(): string
-    {
-        return $this->context;
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessage(): string
-    {
-        return $this->message;
-    }
-}
-```
-
-#### Sample child command
-
-```{.php}
-#!/usr/bin/env php
-<?php
-
-use My\Project\SampleMessage;
-use Saxulum\MessageQueue\SystemV\SystemVSend;
-
-if (!isset($argv[1])) {
-    throw new \InvalidArgumentException('Missing key for SystemVSend');
-}
-
-if (!isset($argv[2])) {
-    throw new \InvalidArgumentException('Missing child id');
-}
-
-$send = new SystemVSend($argv[1]);
-
-for ($i = 0; $i < 100; ++$i) {
-    $message = new SampleMessage($argv[2], sprintf('message %d', $i));
-    $send->send($message);
-
-    echo $message->toJson().PHP_EOL;
-}
-```
-
-#### Parent command
-
-```{.php}
-<?php
-
-use My\Project\SampleMessage;
-use Symfony\Component\Process\Process;
-use Saxulum\MessageQueue\SystemV\SystemVReceive;
-use Saxulum\ProcessesExecutor\ProcessesExecutor;
-
-$processes = [
-    new Process('php subprocess1.php --systemVKey=1'),
-    new Process('php subprocess2.php --systemVKey=1'),
-    new Process('php subprocess3.php --systemVKey=1'),
-    new Process('php subprocess4.php --systemVKey=1'),
-    new Process('php subprocess5.php --systemVKey=1'),
-];
-
-$messages = [];
-
-$receiver = new SystemVReceive(SampleMessage::class, 1);
-
-// make sure the queue is empty
-while (null !== $message = $receiver->receive()) {}
-
-$executor = new ProcessesExecutor();
-$executor->execute(
-    $processes,
-    null,
-    null,
-    function (array $processes) use ($receiver, &$messages) {
-        while (null !== $message = $receiver->receive()) {
-            $messages[] = $message;
         }
     }
 );

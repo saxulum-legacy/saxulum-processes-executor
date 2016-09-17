@@ -24,16 +24,16 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
     /**
      * @param Process[]|array $processes
      * @param \Closure|null   $startCallback
-     * @param \Closure|null   $finishCallback
      * @param \Closure|null   $iterationCallback
+     * @param \Closure|null   $finishCallback
      * @param int             $parallelProcessCount
      * @param int             $iterationSleepInMicroseconds
      */
     public function execute(
         array $processes,
         \Closure $startCallback = null,
-        \Closure $finishCallback = null,
         \Closure $iterationCallback = null,
+        \Closure $finishCallback = null,
         int $parallelProcessCount = 8,
         int $iterationSleepInMicroseconds = 0
     ) {
@@ -51,7 +51,9 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
             }
 
             while (count($parallelProcesses) < $parallelProcessCount) {
+                /** @var Process $process */
                 if (null !== $process = array_shift($processes)) {
+                    $process->start();
                     $this->startCallback($process, $startCallback);
                     $parallelProcesses[] = $process;
                 } else {
@@ -73,8 +75,13 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
      */
     private function startCallback(Process $process, \Closure $startCallback = null)
     {
-        $process->start($startCallback);
-        $this->logger->debug(self::LOG_PROCESS_STARTED, ['process' => $process]);
+        if (null === $startCallback) {
+            return;
+        }
+
+        $this->logger->debug(self::LOG_START_START_CALLBACK, ['process' => $process]);
+        $startCallback($process);
+        $this->logger->debug(self::LOG_STOP_START_CALLBACK, ['process' => $process]);
     }
 
     /**
