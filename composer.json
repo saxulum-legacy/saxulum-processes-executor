@@ -12,10 +12,10 @@
     "require": {
         "php": "~7.0",
         "psr/log": "~1.0",
-        "symfony/process": "~3.0"
+        "symfony/process": "~3.0|~2.8"
     },
     "require-dev": {
-        "phpunit/phpunit": "~5.0"
+        "phpunit/phpunit": "~5.5"
     },
     "autoload": {
         "psr-4": { "Saxulum\\ProcessesExecutor\\": "src/" }
