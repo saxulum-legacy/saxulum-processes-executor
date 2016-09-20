@@ -63,7 +63,7 @@ $startedProcesses = [];
 $executor = new ProcessesExecutor();
 $executor->execute(
     $processes,
-    function (Process $process) use (&$startedProcesses) {
+    function (Process $process, $key) use (&$startedProcesses) {
         $startedProcesses[] = $process->getCommandLine();
     }
 );
@@ -139,7 +139,7 @@ $executor->execute(
     $processes,
     null,
     null,
-    function (Process $process) use (&$outputs, &$errorOutputs) {
+    function (Process $process, $key) use (&$outputs, &$errorOutputs) {
         $commandLine = $process->getCommandLine();
         if ('' !== $output = $process->getOutput()) {
             $outputs[$commandLine] = $output;

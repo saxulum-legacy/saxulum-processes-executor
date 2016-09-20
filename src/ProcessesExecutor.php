@@ -43,19 +43,20 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
         $parallelProcesses = [];
 
         do {
-            foreach ($parallelProcesses as $i => $process) {
+            foreach ($parallelProcesses as $key => $process) {
                 if (false === $process->isRunning()) {
-                    $this->finishCallback($process, $finishCallback);
-                    unset($parallelProcesses[$i]);
+                    $this->finishCallback($process, $key, $finishCallback);
+                    unset($parallelProcesses[$key]);
                 }
             }
 
             while (count($parallelProcesses) < $parallelProcessCount) {
-                /** @var Process $process */
-                if (null !== $process = array_shift($processes)) {
+                if (null !== $key = key($processes)) {
+                    $process = current($processes);
                     $process->start();
-                    $this->startCallback($process, $startCallback);
-                    $parallelProcesses[] = $process;
+                    $this->startCallback($process, $key, $startCallback);
+                    $parallelProcesses[$key] = $process;
+                    next($processes);
                 } else {
                     break;
                 }
@@ -71,17 +72,18 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
 
     /**
      * @param Process       $process
+     * @param mixed         $key
      * @param \Closure|null $startCallback
      */
-    private function startCallback(Process $process, \Closure $startCallback = null)
+    private function startCallback(Process $process, $key, \Closure $startCallback = null)
     {
         if (null === $startCallback) {
             return;
         }
 
-        $this->logger->debug(self::LOG_START_START_CALLBACK, ['process' => $process]);
-        $startCallback($process);
-        $this->logger->debug(self::LOG_STOP_START_CALLBACK, ['process' => $process]);
+        $this->logger->debug(self::LOG_START_START_CALLBACK, ['process' => $process, 'key' => $key]);
+        $startCallback($process, $key);
+        $this->logger->debug(self::LOG_STOP_START_CALLBACK, ['process' => $process, 'key' => $key]);
     }
 
     /**
@@ -101,16 +103,17 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
 
     /**
      * @param Process       $process
+     * @param mixed         $key
      * @param \Closure|null $finishCallback
      */
-    private function finishCallback(Process $process, \Closure $finishCallback = null)
+    private function finishCallback(Process $process, $key, \Closure $finishCallback = null)
     {
         if (null === $finishCallback) {
             return;
         }
 
-        $this->logger->debug(self::LOG_START_FINISH_CALLBACK, ['process' => $process]);
-        $finishCallback($process);
-        $this->logger->debug(self::LOG_STOP_FINISH_CALLBACK, ['process' => $process]);
+        $this->logger->debug(self::LOG_START_FINISH_CALLBACK, ['process' => $process, 'key' => $key]);
+        $finishCallback($process, $key);
+        $this->logger->debug(self::LOG_STOP_FINISH_CALLBACK, ['process' => $process, 'key' => $key]);
     }
 }
