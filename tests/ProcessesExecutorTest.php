@@ -49,9 +49,9 @@ class ProcessesExecutorTest extends TestCase
         $childProcessPath = 'path/to/child/process';
 
         $processes = [];
-        for ($i = 0; $i < 20; ++$i) {
+        for ($key = 0; $key < 20; ++$key) {
             $processes[] = $this->getProcess(
-                $childProcessPath.' '.$i,
+                $childProcessPath.' '.$key,
                 [
                     ['return' => true],
                     ['return' => true],
@@ -67,9 +67,9 @@ class ProcessesExecutorTest extends TestCase
         $executor = new ProcessesExecutor($logger);
         $executor->execute(
             $processes,
-            function (Process $process, int $i) use (&$startedProcesses, $processes) {
-                $startedProcesses[$i] = $process->getCommandLine();
-                self::assertSame($process, $processes[$i]);
+            function (Process $process, int $key) use (&$startedProcesses, $processes) {
+                $startedProcesses[$key] = $process->getCommandLine();
+                self::assertSame($process, $processes[$key]);
             }
         );
 
@@ -82,37 +82,37 @@ class ProcessesExecutorTest extends TestCase
         self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_START_START_CALLBACK, $logsGroupByMessage);
         self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_START_START_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_START_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_START_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
-            self::assertSame($processes[$i], $log['context']['process']);
-            self::assertSame($i, $log['context']['key']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_START_CALLBACK, $logsGroupByMessage);
         self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_START_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_START_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_START_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
-            self::assertSame($processes[$i], $log['context']['process']);
-            self::assertSame($i, $log['context']['key']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 
-        for ($i = 0; $i < 20; ++$i) {
-            self::assertSame($childProcessPath.' '.$i, $startedProcesses[$i]);
+        for ($key = 0; $key < 20; ++$key) {
+            self::assertSame($childProcessPath.' '.$key, $startedProcesses[$key]);
         }
     }
 
@@ -123,9 +123,9 @@ class ProcessesExecutorTest extends TestCase
         $childProcessPath = 'path/to/child/process';
 
         $processes = [];
-        for ($i = 0; $i < 20; ++$i) {
+        for ($key = 0; $key < 20; ++$key) {
             $processes[] = $this->getProcessIncrementalOutput(
-                $childProcessPath.' '.$i,
+                $childProcessPath.' '.$key,
                 [
                     ['return' => true],
                     ['return' => true],
@@ -159,22 +159,21 @@ class ProcessesExecutorTest extends TestCase
             null,
             function (array $processes) use (&$outputs, &$errorOutputs) {
                 self::assertLessThanOrEqual(8, count($processes));
-                foreach ($processes as $process) {
+                foreach ($processes as $key => $process) {
                     /* @var Process $process */
-                    $commandLine = $process->getCommandLine();
                     if ('' !== $output = $process->getIncrementalOutput()) {
-                        if (!isset($outputs[$commandLine])) {
-                            $outputs[$commandLine] = '';
+                        if (!isset($outputs[$key])) {
+                            $outputs[$key] = '';
                         }
 
-                        $outputs[$commandLine] .= $output;
+                        $outputs[$key] .= $output;
                     }
                     if ('' !== $errorOutput = $process->getIncrementalErrorOutput()) {
-                        if (!isset($outputs[$commandLine])) {
-                            $errorOutputs[$commandLine] = '';
+                        if (!isset($outputs[$key])) {
+                            $errorOutputs[$key] = '';
                         }
 
-                        $errorOutputs[$commandLine] .= $errorOutput;
+                        $errorOutputs[$key] .= $errorOutput;
                     }
                 }
             }
@@ -189,28 +188,28 @@ class ProcessesExecutorTest extends TestCase
         self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_START_ITERATION_CALLBACK, $logsGroupByMessage);
         self::assertCount(16, $logsGroupByMessage[ProcessesExecutor::LOG_START_ITERATION_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_ITERATION_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_ITERATION_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK, $logsGroupByMessage);
         self::assertCount(16, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 
@@ -227,9 +226,9 @@ class ProcessesExecutorTest extends TestCase
         $childProcessPath = 'path/to/child/process';
 
         $processes = [];
-        for ($i = 0; $i < 20; ++$i) {
+        for ($key = 0; $key < 20; ++$key) {
             $processes[] = $this->getProcessWithOutput(
-                $childProcessPath.' '.$i,
+                $childProcessPath.' '.$key,
                 [
                     ['return' => true],
                     ['return' => true],
@@ -254,16 +253,15 @@ class ProcessesExecutorTest extends TestCase
             $processes,
             null,
             null,
-            function (Process $process, int $i) use (&$outputs, &$errorOutputs, $processes) {
-                $commandLine = $process->getCommandLine();
+            function (Process $process, int $key) use (&$outputs, &$errorOutputs, $processes) {
                 if ('' !== $output = $process->getOutput()) {
-                    $outputs[$commandLine] = $output;
+                    $outputs[$key] = $output;
                 }
                 if ('' !== $errorOutput = $process->getErrorOutput()) {
-                    $errorOutputs[$commandLine] = $errorOutput;
+                    $errorOutputs[$key] = $errorOutput;
                 }
 
-                self::assertSame($process, $processes[$i]);
+                self::assertSame($process, $processes[$key]);
             }
         );
 
@@ -276,32 +274,32 @@ class ProcessesExecutorTest extends TestCase
         self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_START_FINISH_CALLBACK, $logsGroupByMessage);
         self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_START_FINISH_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_FINISH_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_FINISH_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
-            self::assertSame($processes[$i], $log['context']['process']);
-            self::assertSame($i, $log['context']['key']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_FINISH_CALLBACK, $logsGroupByMessage);
         self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_FINISH_CALLBACK]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_FINISH_CALLBACK] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_FINISH_CALLBACK] as $key => $log) {
             self::assertSame(LogLevel::DEBUG, $log['level']);
-            self::assertSame($processes[$i], $log['context']['process']);
-            self::assertSame($i, $log['context']['key']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
         }
 
         self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
         self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
 
-        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $i => $log) {
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
             self::assertSame(LogLevel::INFO, $log['level']);
         }
 

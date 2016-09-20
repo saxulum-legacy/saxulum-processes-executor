@@ -64,7 +64,7 @@ $executor = new ProcessesExecutor();
 $executor->execute(
     $processes,
     function (Process $process, $key) use (&$startedProcesses) {
-        $startedProcesses[] = $process->getCommandLine();
+        $startedProcesses[$key] = $process->getCommandLine();
     }
 );
 ```
@@ -93,22 +93,21 @@ $executor->execute(
     $processes,
     null,
     function (array $processes) use (&$outputs, &$errorOutputs) {
-        foreach ($processes as $process) {
+        foreach ($processes as $key => $process) {
             /** @var Process $process */
-            $commandLine = $process->getCommandLine();
             if ('' !== $output = $process->getIncrementalOutput()) {
-                if (!isset($outputs[$commandLine])) {
-                    $outputs[$commandLine] = '';
+                if (!isset($outputs[$key])) {
+                    $outputs[$key] = '';
                 }
 
-                $outputs[$commandLine] .= $output;
+                $outputs[$key] .= $output;
             }
             if ('' !== $errorOutput = $process->getIncrementalErrorOutput()) {
-                if (!isset($outputs[$commandLine])) {
-                    $errorOutputs[$commandLine] = '';
+                if (!isset($outputs[$key])) {
+                    $errorOutputs[$key] = '';
                 }
 
-                $errorOutputs[$commandLine] .= $errorOutput;
+                $errorOutputs[$key] .= $errorOutput;
             }
         }
     }
@@ -140,12 +139,11 @@ $executor->execute(
     null,
     null,
     function (Process $process, $key) use (&$outputs, &$errorOutputs) {
-        $commandLine = $process->getCommandLine();
         if ('' !== $output = $process->getOutput()) {
-            $outputs[$commandLine] = $output;
+            $outputs[$key] = $output;
         }
         if ('' !== $errorOutput = $process->getErrorOutput()) {
-            $errorOutputs[$commandLine] = $errorOutput;
+            $errorOutputs[$key] = $errorOutput;
         }
     }
 );
