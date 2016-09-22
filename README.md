@@ -35,7 +35,7 @@ $processes = [
     new Process('php subprocess5.php'),
 ];
 
-$startedProcesses = [];
+$startedCommandLines = [];
 
 $executor = new ProcessesExecutor();
 $executor->execute($processes);
@@ -58,13 +58,13 @@ $processes = [
     new Process('php subprocess5.php'),
 ];
 
-$startedProcesses = [];
+$startedCommandLines = [];
 
 $executor = new ProcessesExecutor();
 $executor->execute(
     $processes,
     function (Process $process, $key) use (&$startedProcesses) {
-        $startedProcesses[$key] = $process->getCommandLine();
+        $startedCommandLines[$key] = $process->getCommandLine();
     }
 );
 ```

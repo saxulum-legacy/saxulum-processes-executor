@@ -23,17 +23,17 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
 
     /**
      * @param Process[]|array $processes
-     * @param \Closure|null   $startCallback
-     * @param \Closure|null   $iterationCallback
-     * @param \Closure|null   $finishCallback
+     * @param callable|null   $startCallback
+     * @param callable|null   $iterationCallback
+     * @param callable|null   $finishCallback
      * @param int             $parallelProcessCount
      * @param int             $iterationSleepInMicroseconds
      */
     public function execute(
         array $processes,
-        \Closure $startCallback = null,
-        \Closure $iterationCallback = null,
-        \Closure $finishCallback = null,
+        callable $startCallback = null,
+        callable $iterationCallback = null,
+        callable $finishCallback = null,
         int $parallelProcessCount = 8,
         int $iterationSleepInMicroseconds = 0
     ) {
@@ -73,9 +73,9 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
     /**
      * @param Process       $process
      * @param mixed         $key
-     * @param \Closure|null $startCallback
+     * @param callable|null $startCallback
      */
-    private function startCallback(Process $process, $key, \Closure $startCallback = null)
+    private function startCallback(Process $process, $key, callable $startCallback = null)
     {
         if (null === $startCallback) {
             return;
@@ -88,9 +88,9 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
 
     /**
      * @param Process[]|array $processes
-     * @param \Closure|null   $iterationCallback
+     * @param callable|null   $iterationCallback
      */
-    private function callIterationCallback(array $processes, \Closure $iterationCallback = null)
+    private function callIterationCallback(array $processes, callable $iterationCallback = null)
     {
         if (null === $iterationCallback) {
             return;
@@ -104,9 +104,9 @@ final class ProcessesExecutor implements ProcessesExecutorInterface
     /**
      * @param Process       $process
      * @param mixed         $key
-     * @param \Closure|null $finishCallback
+     * @param callable|null $finishCallback
      */
-    private function finishCallback(Process $process, $key, \Closure $finishCallback = null)
+    private function finishCallback(Process $process, $key, callable $finishCallback = null)
     {
         if (null === $finishCallback) {
             return;

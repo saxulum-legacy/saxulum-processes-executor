@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 use Saxulum\ProcessesExecutor\ProcessesExecutor;
+use Saxulum\Tests\ProcessesExecutor\Resources\CallbackObject;
 use Symfony\Component\Process\Process;
 
 /**
@@ -42,7 +43,7 @@ class ProcessesExecutorTest extends TestCase
         );
     }
 
-    public function testExecuteWithTwentyProcessesAndStartCallback()
+    public function testExecuteWithTwentyProcessesAndStartClosureCallback()
     {
         $logger = new TestLogger();
 
@@ -62,13 +63,13 @@ class ProcessesExecutorTest extends TestCase
             );
         }
 
-        $startedProcesses = [];
+        $startedCommandLines = [];
 
         $executor = new ProcessesExecutor($logger);
         $executor->execute(
             $processes,
-            function (Process $process, int $key) use (&$startedProcesses, $processes) {
-                $startedProcesses[$key] = $process->getCommandLine();
+            function (Process $process, int $key) use (&$startedCommandLines, $processes) {
+                $startedCommandLines[$key] = $process->getCommandLine();
                 self::assertSame($process, $processes[$key]);
             }
         );
@@ -112,11 +113,81 @@ class ProcessesExecutorTest extends TestCase
         }
 
         for ($key = 0; $key < 20; ++$key) {
-            self::assertSame($childProcessPath.' '.$key, $startedProcesses[$key]);
+            self::assertSame($childProcessPath.' '.$key, $startedCommandLines[$key]);
         }
     }
 
-    public function testExecuteWithTwentyProcessesAndIterationCallback()
+    public function testExecuteWithTwentyProcessesAndStartObjectCallback()
+    {
+        $logger = new TestLogger();
+
+        $childProcessPath = 'path/to/child/process';
+
+        $processes = [];
+        for ($key = 0; $key < 20; ++$key) {
+            $processes[] = $this->getProcess(
+                $childProcessPath.' '.$key,
+                [
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => false],
+                ]
+            );
+        }
+
+        $callbackObject = new CallbackObject();
+
+        $executor = new ProcessesExecutor($logger);
+        $executor->execute($processes, [$callbackObject, 'start']);
+
+        $startedCommandLines = $callbackObject->getStartedCommandLines();
+
+        $logs = $logger->getLogs();
+
+        self::assertCount(42, $logs);
+
+        $logsGroupByMessage = $this->getLogsGroupByMessage($logs);
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START_START_CALLBACK, $logsGroupByMessage);
+        self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_START_START_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_START_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_START_CALLBACK, $logsGroupByMessage);
+        self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_START_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_START_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        for ($key = 0; $key < 20; ++$key) {
+            self::assertSame($childProcessPath.' '.$key, $startedCommandLines[$key]);
+        }
+    }
+
+    public function testExecuteWithTwentyProcessesAndIterationClosureCallback()
     {
         $logger = new TestLogger();
 
@@ -169,7 +240,7 @@ class ProcessesExecutorTest extends TestCase
                         $outputs[$key] .= $output;
                     }
                     if ('' !== $errorOutput = $process->getIncrementalErrorOutput()) {
-                        if (!isset($outputs[$key])) {
+                        if (!isset($errorOutputs[$key])) {
                             $errorOutputs[$key] = '';
                         }
 
@@ -219,7 +290,86 @@ class ProcessesExecutorTest extends TestCase
         self::assertCount(0, $errorOutputs);
     }
 
-    public function testExecuteWithTwentyProcessesAndFinishCallback()
+    public function testExecuteWithTwentyProcessesAndIterationObjectCallback()
+    {
+        $logger = new TestLogger();
+
+        $childProcessPath = 'path/to/child/process';
+
+        $processes = [];
+        for ($key = 0; $key < 20; ++$key) {
+            $processes[] = $this->getProcessIncrementalOutput(
+                $childProcessPath.' '.$key,
+                [
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => false],
+                ],
+                [
+                    ['return' => 'Yet'],
+                    ['return' => ' another'],
+                    ['return' => ' output'],
+                    ['return' => ' line'],
+                    ['return' => PHP_EOL],
+                ],
+                [
+                    ['return' => ''],
+                    ['return' => ''],
+                    ['return' => ''],
+                    ['return' => ''],
+                    ['return' => ''],
+                ]
+            );
+        }
+
+        $callbackObject = new CallbackObject();
+
+        $executor = new ProcessesExecutor($logger);
+        $executor->execute($processes, null, [$callbackObject, 'iteration']);
+
+        $logs = $logger->getLogs();
+
+        self::assertCount(34, $logs);
+
+        $logsGroupByMessage = $this->getLogsGroupByMessage($logs);
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START_ITERATION_CALLBACK, $logsGroupByMessage);
+        self::assertCount(16, $logsGroupByMessage[ProcessesExecutor::LOG_START_ITERATION_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_ITERATION_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK, $logsGroupByMessage);
+        self::assertCount(16, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_ITERATION_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        self::assertCount(20, $callbackObject->getOutputs());
+        self::assertSame(480, strlen(implode($callbackObject->getOutputs())), 'Output length is invalid!');
+
+        self::assertCount(0, $callbackObject->getErrorOutputs());
+    }
+
+    public function testExecuteWithTwentyProcessesAndFinishClosureCallback()
     {
         $logger = new TestLogger();
 
@@ -307,6 +457,81 @@ class ProcessesExecutorTest extends TestCase
         self::assertSame(480, strlen(implode($outputs)), 'Output length is invalid!');
 
         self::assertCount(0, $errorOutputs);
+    }
+
+    public function testExecuteWithTwentyProcessesAndFinishObjectCallback()
+    {
+        $logger = new TestLogger();
+
+        $childProcessPath = 'path/to/child/process';
+
+        $processes = [];
+        for ($key = 0; $key < 20; ++$key) {
+            $processes[] = $this->getProcessWithOutput(
+                $childProcessPath.' '.$key,
+                [
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => true],
+                    ['return' => false],
+                ],
+                [
+                    ['return' => 'Yet another output line'.PHP_EOL],
+                ],
+                [
+                    ['return' => ''],
+                ]
+            );
+        }
+
+        $callbackObject = new CallbackObject();
+
+        $executor = new ProcessesExecutor($logger);
+        $executor->execute($processes, null, null, [$callbackObject, 'finish']);
+
+        $logs = $logger->getLogs();
+
+        self::assertCount(42, $logs);
+
+        $logsGroupByMessage = $this->getLogsGroupByMessage($logs);
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_START]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_START_FINISH_CALLBACK, $logsGroupByMessage);
+        self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_START_FINISH_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_START_FINISH_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_STOP_FINISH_CALLBACK, $logsGroupByMessage);
+        self::assertCount(20, $logsGroupByMessage[ProcessesExecutor::LOG_STOP_FINISH_CALLBACK]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_STOP_FINISH_CALLBACK] as $key => $log) {
+            self::assertSame(LogLevel::DEBUG, $log['level']);
+            self::assertSame($processes[$key], $log['context']['process']);
+            self::assertSame($key, $log['context']['key']);
+        }
+
+        self::assertArrayHasKey(ProcessesExecutor::LOG_FINISHED, $logsGroupByMessage);
+        self::assertCount(1, $logsGroupByMessage[ProcessesExecutor::LOG_FINISHED]);
+
+        foreach ($logsGroupByMessage[ProcessesExecutor::LOG_FINISHED] as $key => $log) {
+            self::assertSame(LogLevel::INFO, $log['level']);
+        }
+
+        self::assertCount(20, $callbackObject->getOutputs());
+        self::assertSame(480, strlen(implode($callbackObject->getOutputs())), 'Output length is invalid!');
+
+        self::assertCount(0, $callbackObject->getErrorOutputs());
     }
 
     /**

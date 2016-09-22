@@ -17,17 +17,17 @@ interface ProcessesExecutorInterface
 
     /**
      * @param Process[]|array $processes
-     * @param \Closure|null   $startCallback
-     * @param \Closure|null   $iterationCallback
-     * @param \Closure|null   $finishCallback
+     * @param callable|null   $startCallback
+     * @param callable|null   $iterationCallback
+     * @param callable|null   $finishCallback
      * @param int             $parallelProcessCount
      * @param int             $iterationSleepInMicroseconds
      */
     public function execute(
         array $processes,
-        \Closure $startCallback = null,
-        \Closure $iterationCallback = null,
-        \Closure $finishCallback = null,
+        callable $startCallback = null,
+        callable $iterationCallback = null,
+        callable $finishCallback = null,
         int $parallelProcessCount = 8,
         int $iterationSleepInMicroseconds = 0
     );
