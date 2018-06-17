@@ -11,7 +11,7 @@ use Symfony\Component\Process\Process;
 
 /**
  * @group unit
- * @covers Saxulum\ProcessesExecutor\ProcessesExecutor
+ * @covers \Saxulum\ProcessesExecutor\ProcessesExecutor
  */
 class ProcessesExecutorTest extends TestCase
 {

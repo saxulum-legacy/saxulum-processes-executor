@@ -1,9 +1,12 @@
 # saxulum-processes-executor
 
 [![Build Status](https://api.travis-ci.org/saxulum/saxulum-processes-executor.png?branch=master)](https://travis-ci.org/saxulum/saxulum-processes-executor)
-[![Total Downloads](https://poser.pugx.org/saxulum/saxulum-processes-executor/downloads.png)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
-[![Latest Stable Version](https://poser.pugx.org/saxulum/saxulum-processes-executor/v/stable.png)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/saxulum/saxulum-processes-executor/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/saxulum/saxulum-processes-executor/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/saxulum/saxulum-processes-executor/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/saxulum/saxulum-processes-executor/?branch=master)
+[![Total Downloads](https://poser.pugx.org/saxulum/saxulum-processes-executor/downloads.png)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
+[![Monthly Downloads](https://poser.pugx.org/saxulum/saxulum-processes-executor/d/monthly)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
+[![Latest Stable Version](https://poser.pugx.org/saxulum/saxulum-processes-executor/v/stable.png)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
+[![Latest Unstable Version](https://poser.pugx.org/saxulum/saxulum-processes-executor/v/unstable)](https://packagist.org/packages/saxulum/saxulum-processes-executor)
 
 ## Description
 
@@ -12,6 +15,8 @@ A simple to use process executor.
 ## Requirements
 
  * php: ~7.0
+ * psr/log: ~1.0
+ * symfony/process: ~4.0|~3.0|~2.8
 
 ## Installation
 
