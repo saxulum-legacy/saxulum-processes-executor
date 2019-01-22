@@ -26,7 +26,7 @@ Through [Composer](http://getcomposer.org) as [saxulum/saxulum-processes-executo
 
 ### Simple use without any callbacks
 
-```{.php}
+```php
 <?php
 
 use Symfony\Component\Process\Process;
@@ -49,7 +49,7 @@ $executor->execute($processes);
 
 ### With start callback (get called onces per process)
 
-```{.php}
+```php
 <?php
 
 use Symfony\Component\Process\Process;
@@ -76,7 +76,7 @@ $executor->execute(
 
 ### With iteration callback (get called onces per iteration)
 
-```{.php}
+```php
 <?php
 
 use Symfony\Component\Process\Process;
@@ -121,7 +121,7 @@ $executor->execute(
 
 ### With finish callback (get called onces per process)
 
-```{.php}
+```php
 <?php
 
 use Symfony\Component\Process\Process;
